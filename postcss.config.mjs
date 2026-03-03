@@ -1,7 +1,8 @@
+// postcss.config.mjs — Tailwind v3 syntax
 const config = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    tailwindcss: {},
+    autoprefixer: {},
   },
 };
-
 export default config;
