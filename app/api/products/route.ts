@@ -30,7 +30,7 @@ export async function GET() {
 // POST /api/products — creates a new product with server-side calculated expiry
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     // Upsert user record on first interaction
-    const clerkUser = auth();
+    const clerkUser = await auth();
     await User.findOneAndUpdate(
       { clerkUserId: userId },
       { clerkUserId: userId, email: "", name: "" },
