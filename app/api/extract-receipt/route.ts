@@ -1,13 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { extractWarrantyFields } from "@/lib/gemini";
+import { extractWarrantyFields } from "@/lib/groq";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // const { userId } = await auth();
+    // if (!userId) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
     const { imageUrl } = await req.json();
     if (!imageUrl) {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
       const ocrData = await ocrRes.json();
       if (!ocrRes.ok) throw new Error(ocrData.error ?? "OCR failed");
-      rawText = ocrData.rawText ?? "";
+      rawText = ocrData.data.rawText ?? "";
     } catch (ocrErr) {
       console.error("OCR server error:", ocrErr);
       return NextResponse.json(

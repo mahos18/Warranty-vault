@@ -13,7 +13,7 @@ export interface ExtractedWarrantyFields {
 export async function extractWarrantyFields(
   ocrText: string
 ): Promise<ExtractedWarrantyFields> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
   const prompt = `You are an invoice data extraction system.
 Extract the following fields from the receipt text below.

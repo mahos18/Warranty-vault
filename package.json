@@ -13,8 +13,9 @@
     "cloudinary": "^2.5.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
+    "groq-sdk": "^0.37.0",
     "mongoose": "^8.5.1",
-    "next": "15.2.8",
+    "next": "^15.5.12",
     "react": "^18",
     "react-dom": "^18",
     "svix": "^1.24.0"
