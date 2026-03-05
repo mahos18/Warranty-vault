@@ -47,3 +47,4 @@ export function formatDaysRemaining(days: number): string {
   if (days === 1) return "1 day left";
   return `${days} days left`;
 }
+

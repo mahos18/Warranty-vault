@@ -49,7 +49,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="sticky bottom-0 w-full bg-white flex pb-safe z-50 justify-around"
+      className="sticky bottom-0 w-full bg-white flex pb-safe z-50 justify-between items-center"
       style={{ borderTop: "1px solid var(--border)" }}
     >
       {NAV_ITEMS.map((item) => {
@@ -72,7 +72,15 @@ export default function BottomNav() {
           </Link>
         );
       })}
-      <UserButton />
+      <div className="w-[15%] p-2.5 flex justify-center items-center flex-col">
+        <UserButton />
+        <span
+              className="text-[10px] font-semibold tracking-wide"
+              style={{ color:"var(--primary)" }}
+            >
+              Profile
+            </span>
+      </div>
     </nav>
   );
 }

@@ -177,7 +177,7 @@ export default function AssistantPage() {
 
       {/* ── Header ── */}
       <div
-        className="flex-shrink-0 px-5 pt-12 pb-3 bg-white"
+        className="flex-shrink-0 px-5 pt-4 pb-3 bg-white fixed w-full h-10vh"
         style={{ borderBottom: "1px solid var(--border)" }}
       >
         <h1 className="text-base font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
@@ -189,7 +189,7 @@ export default function AssistantPage() {
       </div>
 
       {/* ── Scrollable Chat Area ── */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 no-scrollbar" style={{ paddingBottom: "8px" }}>
+      <div className="flex-1 overflow-y-auto px-4 pt-4 mt-20 no-scrollbar max-h-[75vh]" style={{ paddingBottom: "8px" }}>
 
         {/* Welcome Card */}
         {showWelcome && (
@@ -244,7 +244,7 @@ export default function AssistantPage() {
 
       {/* ── Sticky Input Bar ── */}
       <div
-        className="flex-shrink-0 px-4 py-3 bg-white"
+        className="flex-shrink-0 px-4 py-3 bg-white fixed bottom-20"
         style={{ borderTop: "1px solid var(--border)", paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
       >
         <div className="flex items-center gap-2">
