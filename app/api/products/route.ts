@@ -5,7 +5,6 @@ import Product from "@/lib/models/Product";
 import User from "@/lib/models/User";
 import { calculateWarrantyExpiry, determineWarrantyStatus } from "@/lib/utils";
 
-// GET /api/products — returns all products for authenticated user, sorted by nearest expiry
 export async function GET() {
   try {
     const { userId } = await auth();
@@ -15,7 +14,6 @@ export async function GET() {
 
     await connectToDatabase();
 
-    // Only return this user's products, sorted by warranty expiry (soonest first)
     const products = await Product.find({ userId })
       .sort({ warrantyExpiryDate: 1 })
       .lean();
@@ -27,7 +25,6 @@ export async function GET() {
   }
 }
 
-// POST /api/products — creates a new product with server-side calculated expiry
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -37,8 +34,6 @@ export async function POST(req: NextRequest) {
 
     await connectToDatabase();
 
-    // Upsert user record on first interaction
-    const clerkUser = await auth();
     await User.findOneAndUpdate(
       { clerkUserId: userId },
       { clerkUserId: userId, email: "", name: "" },
@@ -47,7 +42,6 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    // Validate required fields
     const { productName, category, purchaseDate, warrantyDurationMonths } = body;
     if (!productName || !category || !purchaseDate || !warrantyDurationMonths) {
       return NextResponse.json(
@@ -66,10 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid purchaseDate" }, { status: 400 });
     }
 
-    // SERVER-SIDE ONLY: Calculate expiry date — never trust client-provided values
     const warrantyExpiryDate = calculateWarrantyExpiry(parsedPurchaseDate, duration);
-
-    // Determine status based on calculated expiry
     const warrantyStatus = determineWarrantyStatus(warrantyExpiryDate);
 
     const product = await Product.create({
@@ -80,9 +71,10 @@ export async function POST(req: NextRequest) {
       serialNumber: body.serialNumber?.trim(),
       purchaseDate: parsedPurchaseDate,
       warrantyDurationMonths: duration,
-      warrantyExpiryDate,    // ← Server calculated
-      warrantyStatus,        // ← Server determined
+      warrantyExpiryDate,
+      warrantyStatus,
       purchaseAmount: body.purchaseAmount ? parseFloat(body.purchaseAmount) : undefined,
+      invoiceImageUrl: body.invoiceImageUrl?.trim() || "", // ← FIXED
     });
 
     return NextResponse.json({ product }, { status: 201 });

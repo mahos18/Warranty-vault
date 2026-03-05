@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ReceiptUploader from "@/components/ReceiptUploader";
+import InvoiceUploader from "@/components/InvoiceUploader";
 
 const CATEGORIES = ["Electronics", "Appliances", "Vehicles", "Furniture", "Tools", "Other"];
 
@@ -48,11 +49,11 @@ export default function AddProductForm() {
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name } = e.target;
     setForm((prev) => ({ ...prev, [name]: e.target.value }));
-    // Remove highlight when user edits a field manually
     setAutofillFields((prev) => { const n = new Set(prev); n.delete(name); return n; });
     setError("");
   }
 
+  // Called by ReceiptUploader when OCR + AI extraction completes
   function handleExtracted(
     fields: {
       productName: string | null;
@@ -66,7 +67,8 @@ export default function AddProductForm() {
     const filled = new Set<string>();
 
     setForm((prev) => {
-      const next = { ...prev, invoiceImageUrl: imageUrl };
+      const next = { ...prev };
+      if (imageUrl) { next.invoiceImageUrl = imageUrl; }
       if (fields.productName) { next.productName = fields.productName; filled.add("productName"); }
       if (fields.brand) { next.brand = fields.brand; filled.add("brand"); }
       if (fields.purchaseDate) {
@@ -88,6 +90,11 @@ export default function AddProductForm() {
     setAutofillActive(true);
     setTimeout(() => setAutofillActive(false), 3000);
     setError("");
+  }
+
+  // Called by InvoiceUploader when file is uploaded (without OCR)
+  function handleInvoiceUploaded(url: string) {
+    setForm((prev) => ({ ...prev, invoiceImageUrl: url }));
   }
 
   function normalizeDate(dateStr: string): string {
@@ -132,14 +139,20 @@ export default function AddProductForm() {
   return (
     <div className="px-5 flex flex-col gap-5">
 
-      {/* Receipt Scanner */}
+      {/* ── Receipt Scanner (OCR + autofill) ── */}
       <ReceiptUploader onExtracted={handleExtracted} />
+
+      {/* ── Invoice / Warranty Card Upload (just save to vault) ── */}
+      <InvoiceUploader
+        onUploaded={handleInvoiceUploaded}
+        existingUrl={form.invoiceImageUrl}
+        />
 
       {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
         <span className="text-xs font-semibold px-2" style={{ color: "var(--text-muted)" }}>
-          or fill manually
+          product details
         </span>
         <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
       </div>
@@ -165,7 +178,6 @@ export default function AddProductForm() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
         <Field label="Product Name" required>
           <input name="productName" value={form.productName} onChange={handleChange}
             placeholder="e.g. iPhone 15 Pro Max"
@@ -213,10 +225,12 @@ export default function AddProductForm() {
             className={inputClass} style={getFieldStyle("purchaseAmount")} />
         </Field>
 
+        
+
         <button type="submit" disabled={loading}
           className="w-full py-4 rounded-2xl text-base font-bold text-white mt-2 active:scale-95 transition-transform disabled:opacity-60"
           style={{ background: "var(--primary)" }}>
-          {loading ? "Saving..." : "Save Product →"}
+          {loading ? "Saving..." : "Save to Vault →"}
         </button>
 
         <div className="h-4" />

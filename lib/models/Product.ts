@@ -31,7 +31,7 @@ const ProductSchema = new Schema<IProduct>(
     warrantyDurationMonths: { type: Number, required: true, min: 1 },
     warrantyExpiryDate: { type: Date, required: true, index: true },  // Index for sorting
     purchaseAmount: { type: Number, min: 0 },
-    invoiceImageUrl: { type: String },
+    invoiceImageUrl: { type: String, default: "" },
     warrantyStatus: {
       type: String,
       enum: ["active", "expiring", "expired"],
