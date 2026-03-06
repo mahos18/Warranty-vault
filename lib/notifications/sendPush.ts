@@ -1,11 +1,5 @@
 import webPush from "web-push";
 
-webPush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL!}`,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 export interface PushPayload {
   title: string;
   body: string;
@@ -21,27 +15,40 @@ export interface PushSubscriptionKeys {
 
 /**
  * Sends a push notification to a single subscription.
- * Returns true on success, false on failure (never throws).
+ * VAPID details set lazily inside the function — not at module load time.
+ * This prevents build-time errors when env vars are not available.
  */
 export async function sendPush(
   subscription: PushSubscriptionKeys,
   payload: PushPayload
 ): Promise<boolean> {
   try {
+    const publicKey  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const privateKey = process.env.VAPID_PRIVATE_KEY;
+    const email      = process.env.VAPID_EMAIL;
+
+    if (!publicKey || !privateKey || !email) {
+      console.error("VAPID env variables not set — skipping push");
+      return false;
+    }
+
+    // Set inside the function so it only runs at request time, not build time
+    webPush.setVapidDetails(`mailto:${email}`, publicKey, privateKey);
+
     await webPush.sendNotification(
       {
         endpoint: subscription.endpoint,
         keys: {
           p256dh: subscription.p256dh,
-          auth: subscription.auth,
+          auth:   subscription.auth,
         },
       },
       JSON.stringify(payload)
     );
+
     return true;
   } catch (err: unknown) {
     const status = (err as { statusCode?: number }).statusCode;
-    // 404 / 410 = subscription expired or unsubscribed — safe to ignore
     if (status === 404 || status === 410) {
       console.log("Push subscription expired:", subscription.endpoint);
     } else {
