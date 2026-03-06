@@ -151,9 +151,7 @@ export default function AssistantPage() {
               className="w-1.5 h-1.5 rounded-full"
               style={{ background: "#4ADE80", animation: "pulse 2s infinite" }}
             />
-            <span className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              Powered by Groq · Your real products
-            </span>
+            
           </div>
         </div>
       </div>
