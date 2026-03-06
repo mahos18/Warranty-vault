@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser,UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import NotificationSetupModal from "@/components/NotificationSetupModal";
 
 type FilterTab = "all" | "active" | "expiring" | "expired";
+
+const CATEGORIES = ["All Categories", "Electronics", "Appliances", "Vehicles", "Furniture", "Tools", "Other"];
 
 interface Product {
   _id: string;
@@ -29,29 +31,26 @@ function getGreeting() {
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<FilterTab>("all");
-  const [showModal, setShowModal] = useState(false);
+  const [products,     setProducts]     = useState<Product[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [activeTab,    setActiveTab]    = useState<FilterTab>("all");
+  const [category,     setCategory]     = useState("All Categories");
+  const [showModal,    setShowModal]    = useState(false);
   const [setupChecked, setSetupChecked] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
-
     async function checkSetup() {
       try {
-        const res = await fetch("/api/user/setup");
+        const res  = await fetch("/api/user/setup");
         const data = await res.json();
-        console.log("Setup data:", data);
         setShowModal(!data.notificationsSetup);
-      } catch (err) {
-        console.error("Setup check failed:", err);
+      } catch {
         setShowModal(true);
       } finally {
         setSetupChecked(true);
       }
     }
-
     checkSetup();
   }, [isLoaded, user]);
 
@@ -64,27 +63,30 @@ export default function DashboardPage() {
   }, []);
 
   const counts = {
-    total: products.length,
-    active: products.filter((p) => p.warrantyStatus === "active").length,
+    total:    products.length,
+    active:   products.filter((p) => p.warrantyStatus === "active").length,
     expiring: products.filter((p) => p.warrantyStatus === "expiring").length,
-    expired: products.filter((p) => p.warrantyStatus === "expired").length,
+    expired:  products.filter((p) => p.warrantyStatus === "expired").length,
   };
 
   const totalValue = products.reduce((s, p) => s + (p.purchaseAmount ?? 0), 0);
 
-  const filtered =
-    activeTab === "all" ? products : products.filter((p) => p.warrantyStatus === activeTab);
+  // Apply both status filter and category filter
+  const filtered = products.filter((p) => {
+    const statusMatch   = activeTab === "all" || p.warrantyStatus === activeTab;
+    const categoryMatch = category === "All Categories" || p.category === category;
+    return statusMatch && categoryMatch;
+  });
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
-    { key: "all", label: "All", count: counts.total },
-    { key: "active", label: "Active", count: counts.active },
+    { key: "all",      label: "All",      count: counts.total },
+    { key: "active",   label: "Active",   count: counts.active },
     { key: "expiring", label: "Expiring", count: counts.expiring },
-    { key: "expired", label: "Expired", count: counts.expired },
+    { key: "expired",  label: "Expired",  count: counts.expired },
   ];
 
   return (
     <>
-      {/* ── Notification Setup Modal — INSIDE return, renders over dashboard ── */}
       {setupChecked && showModal && (
         <NotificationSetupModal onComplete={() => setShowModal(false)} />
       )}
@@ -100,63 +102,54 @@ export default function DashboardPage() {
               Your warranties at a glance
             </p>
           </div>
-          <UserButton />
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 cursor-pointer"
+            style={{ background: "linear-gradient(135deg,#4F46E5,#7C3AED)", border: "2px solid var(--primary-light)" }}>
+            {user?.firstName?.[0]?.toUpperCase() ?? "U"}
+          </div>
         </div>
 
         {/* ── Quick Actions ── */}
         <div className="flex gap-2 px-5 pb-5 no-scrollbar overflow-x-auto">
-          <Link
-            href="/add-product"
+          <Link href="/add-product"
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold text-white flex-shrink-0 active:scale-95 transition-transform"
-            style={{ background: "var(--primary)" }}
-          >
+            style={{ background: "var(--primary)" }}>
             <span className="text-base leading-none">＋</span> Add Warranty
           </Link>
-          <Link
-            href="/service"
+          <Link href="/service"
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold flex-shrink-0 active:scale-95 transition-transform"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-          >
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
             🔧 Service
           </Link>
-          <Link
-            href="/assistant"
+          <Link href="/assistant"
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold flex-shrink-0 active:scale-95 transition-transform"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-          >
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
             🤖 Assistant
           </Link>
         </div>
 
         {/* ── Summary Card ── */}
         <div className="px-5">
-          <div
-            className="rounded-2xl p-6 relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)" }}
-          >
+          <div className="rounded-2xl p-6 relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)" }}>
             <div className="absolute w-44 h-44 rounded-full -top-14 -right-10"
               style={{ background: "rgba(255,255,255,0.07)" }} />
-
             <p className="text-xs font-semibold uppercase tracking-widest mb-4"
               style={{ color: "rgba(255,255,255,0.65)" }}>
               Warranty Summary
             </p>
-
             <div className="flex mb-5">
               {[
-                { label: "Active", value: counts.active, color: "#fff" },
+                { label: "Active",   value: counts.active,   color: "#fff" },
                 { label: "Expiring", value: counts.expiring, color: "#FCD34D" },
-                { label: "Expired", value: counts.expired, color: "#FCA5A5" },
+                { label: "Expired",  value: counts.expired,  color: "#FCA5A5" },
               ].map((s, i, arr) => (
-                <div
-                  key={s.label}
-                  className="flex-1"
+                <div key={s.label} className="flex-1"
                   style={{
                     borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.15)" : "none",
                     paddingRight: i < arr.length - 1 ? "16px" : "0",
-                    marginRight: i < arr.length - 1 ? "16px" : "0",
-                  }}
-                >
+                    marginRight:  i < arr.length - 1 ? "16px" : "0",
+                  }}>
                   <p className="text-3xl font-extrabold leading-none tracking-tight" style={{ color: s.color }}>
                     {loading ? "—" : s.value}
                   </p>
@@ -166,7 +159,6 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-
             <div className="rounded-lg px-4 py-2.5 flex items-center justify-between"
               style={{ background: "rgba(255,255,255,0.12)" }}>
               <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.65)" }}>
@@ -185,48 +177,97 @@ export default function DashboardPage() {
             Your Products
           </h3>
           <span className="text-sm font-semibold" style={{ color: "var(--primary)" }}>
-            {counts.total} total
+            {filtered.length} of {counts.total}
           </span>
         </div>
 
-        {/* ── Filter Pills ── */}
-        <div className="flex gap-2 px-5 pb-4 no-scrollbar overflow-x-auto">
+        {/* ── Status Filter Pills ── */}
+        <div className="flex gap-2 px-5 pb-3 no-scrollbar overflow-x-auto">
           {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95"
               style={
                 activeTab === tab.key
                   ? { background: "var(--primary)", color: "#fff", border: "1.5px solid var(--primary)" }
                   : { background: "var(--bg)", color: "var(--text-secondary)", border: "1.5px solid var(--border)" }
-              }
-            >
+              }>
               {tab.label} {tab.count > 0 && `(${tab.count})`}
             </button>
           ))}
         </div>
 
+        {/* ── Category Dropdown ── */}
+        <div className="px-5 pb-4">
+          <div className="relative">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full appearance-none px-4 py-2.5 rounded-xl text-sm font-semibold outline-none pr-10"
+              style={{
+                background: "var(--surface)",
+                border: "1.5px solid var(--border)",
+                color: category === "All Categories" ? "var(--text-muted)" : "var(--text-primary)",
+              }}>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            {/* Dropdown arrow */}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: "var(--text-muted)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Active filter indicator */}
+          {category !== "All Categories" && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                Filtering by:
+              </span>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
+                style={{ background: "var(--primary-light)", color: "var(--primary)" }}>
+                {category}
+                <button onClick={() => setCategory("All Categories")}
+                  className="ml-0.5 font-bold leading-none" style={{ color: "var(--primary)" }}>
+                  ×
+                </button>
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* ── Products ── */}
         <div className="px-5 flex flex-col gap-2.5 pb-4">
           {loading ? (
-            [1, 2, 3].map((i) => (
+            [1,2,3].map((i) => (
               <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ background: "var(--surface)" }} />
             ))
           ) : filtered.length === 0 ? (
             <div className="text-center py-14">
               <p className="text-4xl mb-3">📭</p>
               <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                {activeTab === "all" ? "No products yet" : `No ${activeTab} warranties`}
+                {activeTab === "all" && category === "All Categories"
+                  ? "No products yet"
+                  : `No ${activeTab === "all" ? "" : activeTab + " "}${category === "All Categories" ? "" : category} warranties`}
               </p>
-              {activeTab === "all" && (
-                <Link
-                  href="/add-product"
+              {activeTab === "all" && category === "All Categories" && (
+                <Link href="/add-product"
                   className="inline-block mt-4 px-6 py-3 rounded-2xl text-sm font-bold text-white active:scale-95 transition-transform"
-                  style={{ background: "var(--primary)" }}
-                >
+                  style={{ background: "var(--primary)" }}>
                   Add your first product
                 </Link>
+              )}
+              {(activeTab !== "all" || category !== "All Categories") && (
+                <button
+                  onClick={() => { setActiveTab("all"); setCategory("All Categories"); }}
+                  className="inline-block mt-3 px-5 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                  style={{ background: "var(--surface)", color: "var(--primary)", border: "1px solid var(--border)" }}>
+                  Clear filters
+                </button>
               )}
             </div>
           ) : (
