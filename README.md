@@ -49,7 +49,7 @@ WarrantyVault is a full-stack, AI-powered Progressive Web App that automates the
 - No login required for technician
 - Token auto-expires in 1 hour for security
 
-### 🤖 AI Warranty Assistant
+### 🤖 AI Warranty Assistant.
 - Powered by Groq LLaMA 3.3 70B
 - Reads user's actual products from the database in real-time
 - Answers warranty expiry, claim steps, required documents
